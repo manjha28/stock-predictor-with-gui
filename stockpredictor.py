@@ -1,5 +1,5 @@
 import pandas as pd
-import  PySimpleGUI as sg
+import PySimpleGUI as sg
 import plotly.express as px
 import pylab as plt
 import plotly.graph_objects as go
@@ -13,15 +13,23 @@ from keras.models import *
 from keras.layers import *
 from datetime import date
 from nsepy import get_history
+from mpl_finance import candlestick2_ohlc
+# import matplotlib.pyplot as plt
+from scipy.signal import argrelmax
+from scipy.signal import argrelmin
 
 def Predictor():
     df = pd.DataFrame(Stock_History)
 
-    data = df.filter(['Close'])
-    dataset = data.values
+    data = df.filter(['Close']) #Filtering data for just Close price
+
+    dataset = data.values #change to numpy array
+
+    '''Spercify the length of training Dataset from complete Dataset'''
     training_data_len = math.ceil(len(dataset) * .65)
     print(training_data_len)
 
+    '''Scaling the dataset'''
     scaler = MinMaxScaler(feature_range=(0, 1))
     scaled_data = scaler.fit_transform(dataset)
 
@@ -65,6 +73,7 @@ def Predictor():
     train = data[:training_data_len]
     valid = data[training_data_len:]
     valid['Predictions'] = predictions
+    print(valid)
 
     plt.figure(figsize=(16, 8))
     plt.title(print("Stock price of" + h))
@@ -74,15 +83,45 @@ def Predictor():
     plt.plot(valid[['Close', 'Predictions']])
     plt.legend(['Train', 'Val', 'Predictions'])
     plt.show()
+
 def DeliveryPerc():
     df = pd.DataFrame(Stock_History)
     data = df['%Deliverble'].apply(lambda x: x*100)
     print(data)
+
+
+def SuppRes(df0):
+    df_open = df0.Open.copy()
+    df_high = df0.High.copy()
+    df_low = df0.Low.copy()
+    df_close = df0.Close.copy()
+
+    df_support = argrelmin(df_low.values, order=5)
+    support_prices = df_low[df_support[0]]
+    support_prices_lower = df_open[df_support[0]]
+
+    resistance = argrelmax(df_high.values, order=5)
+    resistance_prices = df_high[resistance[0]]
+    resistance_prices_higher = df_open[resistance[0]]
+
+    print('Support prices', support_prices)
+    print('Support:', df_support)
+    print('Resistance:', resistance)
+    resistance_prices
+    fig, ax = plt.subplots(figsize=[15, 9])
+    candlestick2_ohlc(ax, df0['Open'], df0['High'], df0['Low'], df0['Close'], colorup='green', colordown='red',
+                      width=1)
+
+    plt.scatter(df_support, support_prices)
+    plt.scatter(resistance, resistance_prices)
+    plt.show()
+
 sg.theme('DarkAmber')
 
 layout = [[sg.Text('Enter symbol of stock'), sg.InputText()], [sg.Text('Date in format(YYYY,MM,DD)')],
           [sg.Text('From'), sg.InputText()], [sg.Text('TO'), sg.InputText()],
-          [sg.Button("Predict"),sg.Button("Delivery"), sg.CloseButton("Cancel")]]
+          [sg.Button("Predict"),sg.Button("Delivery"),
+           sg.Button("TrendLines"),sg.CloseButton("Cancel")]]
 
 window = sg.Window('Window Title', layout)
 
@@ -116,6 +155,20 @@ while True:
                                     start=date(a, b, c),
                                     end=date(d, e, g))
         DeliveryPerc()
+    elif event == 'TrendLines':
+        h = values[0]
+        t = (tuple(map(int, (values[1]).split(','))))
+        f = (tuple(map(int, (values[2]).split(','))))
+        a = t[0]
+        b = t[1]
+        c = t[2]
+        d = f[0]
+        e = f[1]
+        g = f[2]
+        Stock_History = get_history(symbol=h,
+                                    start=date(a, b, c),
+                                    end=date(d, e, g))
+        SuppRes(pd.DataFrame(Stock_History))
 
     elif event in (None, 'Cancel') or sg.WIN_CLOSED:
         break
