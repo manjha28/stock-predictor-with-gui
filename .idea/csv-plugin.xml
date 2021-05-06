@@ -10,6 +10,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\FinalGUI.py">
+          <value>
+            <Attribute>
+              <option name="separator" value=":" />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\guiscrap.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\macd.py">
           <value>
             <Attribute>

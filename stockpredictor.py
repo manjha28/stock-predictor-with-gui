@@ -17,6 +17,10 @@ from mpl_finance import candlestick2_ohlc
 # import matplotlib.pyplot as plt
 from scipy.signal import argrelmax
 from scipy.signal import argrelmin
+from nsetools import nse
+'''This Function is used to predict the stock prices using sequential model from LSTM.
+The data is fetched from a data pipeline built using nsepy.
+Start : 20210226'''
 
 def Predictor():
     df = pd.DataFrame(Stock_History)
@@ -68,7 +72,7 @@ def Predictor():
     predictions = scaler.inverse_transform(predictions)
 
     rmse = np.sqrt(np.mean(((predictions - y_test) ** 2)))
-    rmse
+    sg.Print(rmse)
 
     train = data[:training_data_len]
     valid = data[training_data_len:]
@@ -107,7 +111,7 @@ def SuppRes(df0):
     print('Support prices', support_prices)
     print('Support:', df_support)
     print('Resistance:', resistance)
-    resistance_prices
+    sg.Print(resistance_prices)
     fig, ax = plt.subplots(figsize=[15, 9])
     candlestick2_ohlc(ax, df0['Open'], df0['High'], df0['Low'], df0['Close'], colorup='green', colordown='red',
                       width=1)
@@ -116,7 +120,44 @@ def SuppRes(df0):
     plt.scatter(resistance, resistance_prices)
     plt.show()
 
-sg.theme('DarkAmber')
+'''This Function is used to get all the listed staocks'''
+def alltick():
+    ewatch = []
+    all_stock_codes = nse.get_stock_codes()
+    for i,j in all_stock_codes.items():
+        watch = ewatch.append(i)
+    return ewatch
+
+def MovingAvgScanner(watchlist):
+    for name in watchlist:
+        try:
+            df = get_history(symbol= name , start=date(2020,1,1), end=date(2020,11,6))
+            df['9ema'] = df['Close'].ewm(span=13, adjust=False).mean()
+            df['21ema'] = df['Close'].ewm(span=49, adjust=False).mean()
+            df["9vol"] = df['Volume'].ewm(span=13, adjust=False).mean()
+            df['21vol'] = df['Volume'].ewm(span=49, adjust=False).mean()
+            df['del'] = df['%Deliverble'].apply(lambda x: x*100)
+            # df['ma'] = round(talib.MA(df['Close'], timeperiod=30, matype=0) ,1)
+            # df['rsi'] = round(talib.RSI(df['Close'], timeperiod=14) ,1)
+            ema21 = df.iloc[-1]['21ema']
+            ema9 = df.iloc[-1]['9ema']
+
+            vol21 =  df.iloc[-1]['21vol']
+            vol9 = df.iloc[-1]['9vol']
+
+            delivery = df.iloc[-1]['del']
+            if ema9 > ema21 and vol9 > vol21:
+                print(f"buy {name}")
+            elif ema9 < ema21 and vol9 < vol21<50:
+                print(f"sell {name}")
+            else:
+                print(f"Ignore {name}")
+        except:
+            pass
+
+
+
+# sg.theme('DarkAmber')
 
 layout = [[sg.Text('Enter symbol of stock'), sg.InputText()], [sg.Text('Date in format(YYYY,MM,DD)')],
           [sg.Text('From'), sg.InputText()], [sg.Text('TO'), sg.InputText()],
@@ -141,6 +182,7 @@ while True:
                                     start=date(a, b, c),
                                     end=date(d, e, g))
         Predictor()
+
     elif event == 'Delivery':
         h = values[0]
         t = (tuple(map(int, (values[1]).split(','))))
