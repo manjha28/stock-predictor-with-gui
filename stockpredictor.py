@@ -78,6 +78,7 @@ def Predictor():
     valid = data[training_data_len:]
     valid['Predictions'] = predictions
     print(valid)
+    sg.Print(predictions[-1])
 
     plt.figure(figsize=(16, 8))
     plt.title(print("Stock price of" + h))
