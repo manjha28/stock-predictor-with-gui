@@ -18,6 +18,8 @@ from mpl_finance import candlestick2_ohlc
 from scipy.signal import argrelmax
 from scipy.signal import argrelmin
 from nsetools import nse
+import warnings
+warnings.filterwarnings('ignore')
 '''This Function is used to predict the stock prices using sequential model from LSTM.
 The data is fetched from a data pipeline built using nsepy.
 Start : 20210226'''
@@ -72,13 +74,13 @@ def Predictor():
     predictions = scaler.inverse_transform(predictions)
 
     rmse = np.sqrt(np.mean(((predictions - y_test) ** 2)))
-    sg.Print(rmse)
+    # sg.Print(rmse)
 
     train = data[:training_data_len]
     valid = data[training_data_len:]
     valid['Predictions'] = predictions
     print(valid)
-    sg.Print(predictions[-1])
+    # sg.Print(valid['Predictions'][-1])
 
     plt.figure(figsize=(16, 8))
     plt.title(print("Stock price of" + h))
@@ -112,7 +114,7 @@ def SuppRes(df0):
     print('Support prices', support_prices)
     print('Support:', df_support)
     print('Resistance:', resistance)
-    sg.Print(resistance_prices)
+    # sg.Print(resistance_prices)
     fig, ax = plt.subplots(figsize=[15, 9])
     candlestick2_ohlc(ax, df0['Open'], df0['High'], df0['Low'], df0['Close'], colorup='green', colordown='red',
                       width=1)
